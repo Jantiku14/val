@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Small Note</title>
+    <style>
+        /* Import Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Dancing+Script:wght@500&display=swap');
+
+        :root {
+            --bg-dark: #0f111a;
+            --desk-color: #3e2723;
+            --lamp-light: rgba(255, 220, 180, 0.15);
+            --paper-color: #fdfbf7;
+            --text-color: #2c241b;
+            --accent-gold: #c5a059;
+            --book-width: 300px;
+            --book-height: 400px;
+            --anim-speed: 1.2s;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-color);
+            font-family: 'Cormorant Garamond', serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1500px;
+        }
+
+        /* --- Background Scene --- */
+        .scene {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            overflow: hidden;
+        }
+
+        .sky {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 70%;
+            background: linear-gradient(to bottom, #05070a 0%, #1a1d29 100%);
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.8;
+            animation: twinkle 4s infinite ease-in-out;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .window-frame {
+            position: absolute;
+            top: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 50%;
+            border: 15px solid #1a1510;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+            z-index: -1;
+            background: transparent;
+        }
+
+        .desk-surface {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 40%;
+            background: linear-gradient(to bottom, #2d1b18 0%, #1a0f0d 100%);
+            border-top: 2px solid #4e342e;
+            z-index: -1;
+        }
+
+        /* --- Lighting --- */
+        .lamp-effect {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 0%, var(--lamp-light) 0%, rgba(0,0,0,0.8) 60%);
+            pointer-events: none;
+            z-index: 10;
+            mix-blend-mode: overlay;
+            transition: background 1.5s ease;
+        }
+
+        .lamp-effect.bright {
+            background: radial-gradient(circle at 20% 0%, rgba(255, 230, 200, 0.3) 0%, rgba(0,0,0,0.7) 60%);
+        }
+
+        /* --- Intro Text --- */
+        .intro-text {
+            position: absolute;
+            top: 15%;
+            width: 100%;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 1.2rem;
+            font-style: italic;
+            opacity: 0;
+            transition: opacity 2s ease;
+            z-index: 5;
+            pointer-events: none;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .intro-text.visible {
+            opacity: 1;
+        }
+
+        /* --- The Book --- */
+        .book-container {
+            position: relative;
+            width: var(--book-width);
+            height: var(--book-height);
+            transform-style: preserve-3d;
+            transition: transform 0.5s ease;
+            cursor: pointer;
+            margin-bottom: -50px;
+        }
+
+        @media (max-width: 600px) {
+            :root {
+                --book-width: 260px;
+                --book-height: 360px;
+            }
+        }
+
+        /* Generic Paper Styling */
+        .paper {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            transform-origin: left center;
+            transform-style: preserve-3d;
+            transition: transform var(--anim-speed) cubic-bezier(0.645, 0.045, 0.355, 1);
+            border-radius: 0 10px 10px 0;
+        }
+
+        .front, .back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 30px 30px 30px;
+            background-color: var(--paper-color);
+            border-radius: 0 10px 10px 0;
+            overflow: hidden;
+        }
+
+        .back {
+            transform: rotateY(180deg);
+            /* Blank gutter effect */
+            background: linear-gradient(to right, rgba(0,0,0,0.05) 0%, var(--paper-color) 10%); 
+        }
+
+        /* Cover Styling */
+        .cover-design {
+            background-color: #5d4037;
+            color: #d7ccc8;
+            border: 2px solid #3e2723;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+        }
+        
+        .cover-design::before {
+            content: '';
+            position: absolute;
+            top: 15px; left: 15px; right: 15px; bottom: 15px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .cover-title {
+            font-family: 'Dancing Script', cursive;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .click-hint {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            margin-top: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        /* Page Content Styling */
+        .page-content {
+            text-align: center;
+            font-size: 1.3rem;
+            line-height: 1.6;
+            color: #3e2723;
+        }
+
+        .page-number {
+            position: absolute;
+            bottom: 15px;
+            font-size: 0.9rem;
+            color: #999;
+            font-style: italic;
+        }
+        
+        .front .page-number { right: 20px; }
+        .back .page-number { left: 20px; }
+
+        /* --- Buttons Overlay (Fixed Visibility Issue) --- */
+        /* We put the buttons in a separate layer ON TOP of the book papers so they aren't covered by the next blank page */
+        .ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Let clicks pass through to the book */
+            z-index: 50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .buttons-container {
+            display: flex;
+            gap: 20px;
+            margin-top: 60px; /* Pushed down to align with text on page */
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.8s ease;
+            pointer-events: auto; /* Re-enable clicks for buttons */
+        }
+
+        .buttons-container.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        button {
+            background: transparent;
+            border: 1px solid #8d6e63;
+            padding: 8px 20px;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+            color: #5d4037;
+            cursor: pointer;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #5d4037;
+            color: #fff;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        /* --- Z-Index Management --- */
+        /* 
+           Paper 1: Cover / Blank
+           Paper 2: Page 1 / Blank
+           Paper 3: Page 2 / Blank
+           Paper 4: Page 3 / Blank
+           Paper 5: Question (Front) / Back Cover (Back)
+        */
+        #paper1 { z-index: 5; }
+        #paper2 { z-index: 4; }
+        #paper3 { z-index: 3; }
+        #paper4 { z-index: 2; }
+        #paper5 { z-index: 1; }
+
+        .flipped {
+            transform: rotateY(-180deg);
+        }
+
+        /* Dynamic Z-Index when flipped */
+        .book-container #paper1.flipped { z-index: 1; }
+        .book-container #paper2.flipped { z-index: 2; }
+        .book-container #paper3.flipped { z-index: 3; }
+        .book-container #paper4.flipped { z-index: 4; }
+        .book-container #paper5.flipped { z-index: 5; }
+
+        /* --- Fireworks Canvas --- */
+        #fireworksCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+            display: none; /* Hidden initially */
+        }
+
+        /* Fade Out Overlay */
+        .fade-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: black;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 2s ease;
+            z-index: 999;
+        }
+        .fade-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Background Scene -->
+    <div class="scene">
+        <div class="sky" id="sky"></div>
+        <div class="window-frame"></div>
+    </div>
+
+    <!-- Lighting -->
+    <div class="lamp-effect" id="lampEffect"></div>
+    <canvas id="fireworksCanvas"></canvas>
+
+    <!-- Intro Text -->
+    <div class="intro-text" id="introText">I wrote something…</div>
+
+    <!-- Desk Surface -->
+    <div class="desk-surface"></div>
+
+    <!-- The Book Wrapper (holds book and UI overlay) -->
+    <div style="position: relative; width: 300px; height: 400px;">
+        
+        <!-- The Book -->
+        <div class="book-container" id="book">
+            
+            <!-- Paper 1: Front Cover / Blank -->
+            <div class="paper" id="paper1">
+                <div class="front cover-design">
+                    <div class="cover-title">Thoughts</div>
+                    <div style="font-size: 0.9rem; letter-spacing: 2px;">VOL. I</div>
+                    <div class="click-hint">(Open me)</div>
+                </div>
+                <div class="back">
+                    <!-- Blank Page -->
+                    <div class="page-number">-</div>
+                </div>
+            </div>
+
+            <!-- Paper 2: Page 1 / Blank -->
+            <div class="paper" id="paper2">
+                <div class="front">
+                    <div class="page-content">
+                        "It wasn’t one big moment. Not a perfect day.<br><br>
+                        Just the small talks, the quiet moments, the tiny jokes."
+                    </div>
+                    <div class="page-number">1</div>
+                </div>
+                <div class="back">
+                    <!-- Blank Page -->
+                    <div class="page-number">-</div>
+                </div>
+            </div>
+
+            <!-- Paper 3: Page 2 / Blank -->
+            <div class="paper" id="paper3">
+                <div class="front">
+                    <div class="page-content">
+                        "I find myself overthinking the texts I want to send.<br><br>
+                        Staring a little too long at the snaps you’d already sent.<br><br>
+                        Typing… deleting… starting again."
+                    </div>
+                    <div class="page-number">2</div>
+                </div>
+                <div class="back">
+                    <!-- Blank Page -->
+                    <div class="page-number">-</div>
+                </div>
+            </div>
+
+            <!-- Paper 4: Page 3 / Blank -->
+            <div class="paper" id="paper4">
+                <div class="front">
+                    <div class="page-content">
+                        "And I realized I don’t usually do that for people.<br><br>
+                        I’m honestly just really shy about this, so even asking feels like a big deal.<br><br>
+                        But I figured it’s better to say it than keep overthinking."
+                    </div>
+                    <div class="page-number">3</div>
+                </div>
+                <div class="back">
+                    <!-- Blank Page -->
+                    <div class="page-number">-</div>
+                </div>
+            </div>
+
+            <!-- Paper 5: Question (Front) / Back Cover (Back) -->
+            <div class="paper" id="paper5">
+                <div class="front">
+                    <div class="page-content">
+                        "So…<br><br>
+                        Would you be my Valentine?<br>
+                        <span style="font-size: 0.9rem; color: #888; font-style: italic;">(It’s completely okay if you say no.)</span>"
+                    </div>
+                    <div class="page-number">4</div>
+                </div>
+                <div class="back cover-design">
+                    <!-- BLANK BACK COVER -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- UI Overlay Layer (Sits on top of book pages) -->
+        <div class="ui-layer">
+            <div class="buttons-container" id="decisionButtons">
+                <button id="btnYes">Yes</button>
+                <button id="btnNo">No</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Fade Out Overlay -->
+    <div class="fade-overlay" id="fadeOverlay"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            /* --- 1. Star Generation --- */
+            const sky = document.getElementById('sky');
+            for (let i = 0; i < 60; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.width = `${Math.random() * 2 + 1}px`;
+                star.style.height = star.style.width;
+                star.style.animationDuration = `${Math.random() * 3 + 2}s`;
+                star.style.animationDelay = `${Math.random() * 5}s`;
+                sky.appendChild(star);
+            }
+
+            /* --- 2. Book Interaction Logic --- */
+            const papers = [
+                document.getElementById('paper1'),
+                document.getElementById('paper2'),
+                document.getElementById('paper3'),
+                document.getElementById('paper4'),
+                document.getElementById('paper5')
+            ];
+            
+            const introText = document.getElementById('introText');
+            const decisionButtons = document.getElementById('decisionButtons');
+            let currentPaperIndex = 0;
+
+            setTimeout(() => { introText.classList.add('visible'); }, 1000);
+
+            function flipNext() {
+                if (currentPaperIndex < papers.length) {
+                    const paper = papers[currentPaperIndex];
+                    paper.classList.add('flipped');
+                    currentPaperIndex++;
+
+                    if (currentPaperIndex === 1) introText.style.opacity = '0';
+
+                    // Show buttons on the Question Page (Paper 5 Front)
+                    // Paper 5 is index 4. When it flips, Front is visible.
+                    if (currentPaperIndex === 5) {
+                        setTimeout(() => {
+                            decisionButtons.classList.add('visible');
+                        }, 800);
+                    } else {
+                        // Hide buttons if we flip away from the question page
+                        decisionButtons.classList.remove('visible');
+                    }
+                }
+            }
+
+            papers.forEach((paper, index) => {
+                paper.addEventListener('click', (e) => {
+                    // Prevent flipping if clicking buttons (handled by UI layer mostly, but safe check)
+                    if(e.target.tagName === 'BUTTON') return;
+
+                    e.stopPropagation();
+                    const isFlipped = paper.classList.contains('flipped');
+
+                    if (!isFlipped) {
+                        if (index === currentPaperIndex) flipNext();
+                    } else {
+                        if (index === currentPaperIndex - 1) {
+                            paper.classList.remove('flipped');
+                            currentPaperIndex--;
+                            
+                            // Hide buttons if we leave the question page
+                            if (currentPaperIndex < 5) {
+                                decisionButtons.classList.remove('visible');
+                            }
+                        }
+                    }
+                });
+            });
+
+            /* --- 3. Interaction Outcomes --- */
+            const btnYes = document.getElementById('btnYes');
+            const btnNo = document.getElementById('btnNo');
+            const lampEffect = document.getElementById('lampEffect');
+            const fadeOverlay = document.getElementById('fadeOverlay');
+
+            // YES: Fireworks & Flip to Back Cover
+            btnYes.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // Dim buttons so they don't look clickable during animation
+                decisionButtons.style.opacity = '0';
+                decisionButtons.style.pointerEvents = 'none';
+                
+                lampEffect.classList.add('bright');
+                startFireworks();
+                
+                // Flip to the back cover after a short moment
+                setTimeout(() => {
+                    flipNext();
+                }, 1500);
+            });
+
+            // NO: Fade Out
+            btnNo.addEventListener('click', (e) => {
+                e.stopPropagation();
+                fadeOverlay.classList.add('active');
+            });
+
+            /* --- 4. Mini Fireworks Engine --- */
+            const canvas = document.getElementById('fireworksCanvas');
+            const ctx = canvas.getContext('2d');
+            let fireworks = [];
+            let animationFrame;
+
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            class Particle {
+                constructor(x, y, color) {
+                    this.x = x;
+                    this.y = y;
+                    this.color = color;
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = Math.random() * 3 + 1;
+                    this.vx = Math.cos(angle) * speed;
+                    this.vy = Math.sin(angle) * speed;
+                    this.alpha = 1;
+                    this.decay = Math.random() * 0.02 + 0.015;
+                }
+                draw() {
+                    ctx.globalAlpha = this.alpha;
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                update() {
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    this.vy += 0.05; // Gravity
+                    this.alpha -= this.decay;
+                }
+            }
+
+            function createExplosion(x, y) {
+                const colors = ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                for (let i = 0; i < 30; i++) {
+                    fireworks.push(new Particle(x, y, color));
+                }
+            }
+
+            function animateFireworks() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Randomly create explosions
+                if (Math.random() < 0.05) { 
+                    const x = Math.random() * canvas.width;
+                    const y = Math.random() * (canvas.height * 0.6); 
+                    createExplosion(x, y);
+                }
+
+                fireworks.forEach((p, index) => {
+                    p.update();
+                    p.draw();
+                    if (p.alpha <= 0) fireworks.splice(index, 1);
+                });
+
+                if (fireworks.length > 0 || Math.random() < 0.05) {
+                    animationFrame = requestAnimationFrame(animateFireworks);
+                }
+            }
+
+            function startFireworks() {
+                canvas.style.display = 'block';
+                createExplosion(canvas.width / 2, canvas.height / 3);
+                animateFireworks();
+            }
+        });
+    </script>
+</body>
+</html>
